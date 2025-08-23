@@ -132,6 +132,54 @@ def convert_file(input_path: str, output_path: Optional[str] = None, language: s
     print(f"Language: {language}")
 
 
+def _default_output_from_url(url: str) -> Path:
+    tail = url.rstrip('/').rsplit('/', 1)[-1]
+    # Ensure it has .md suffix
+    if not tail:
+        tail = 'problem'
+    if not tail.endswith('.md'):
+        tail += '.md'
+    return Path(tail)
+
+
+def convert_url(url: str, output_path: Optional[str] = None, language: str = 'ja') -> None:
+    """Fetch an AtCoder problem page via HTTP(S) and convert it to Markdown.
+
+    Parameters
+    ----------
+    url : str
+        The full URL to the AtCoder task (e.g. https://atcoder.jp/contests/abc419/tasks/abc419_e)
+    output_path : Optional[str]
+        Destination markdown file path. If omitted, derive from the last path segment.
+    language : str
+        'ja' or 'en'
+    """
+    try:
+        import requests  # type: ignore
+    except ImportError:  # pragma: no cover - defensive
+        print("Error: 'requests' package is required for URL input. Please install dependencies.", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        resp = requests.get(url, timeout=10)
+    except Exception as e:  # pragma: no cover - network failure path
+        print(f"Error: Failed to fetch URL: {e}", file=sys.stderr)
+        sys.exit(1)
+    if resp.status_code != 200:
+        print(f"Error: HTTP {resp.status_code} when fetching URL", file=sys.stderr)
+        sys.exit(1)
+    html_content = resp.text
+    parser = AtCoderProblemParser(html_content, language)
+    markdown_content = parser.parse()
+    if output_path is None:
+        output_file = _default_output_from_url(url)
+    else:
+        output_file = Path(output_path)
+    output_file.write_text(markdown_content, encoding='utf-8')
+    print(f"Successfully converted '{url}' to '{output_file}'")
+    print(f"Language: {language}")
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(
@@ -139,11 +187,15 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog='''\nExamples:\n  uv run apc problem.html\n  uv run apc problem.html output.md\n  uv run apc problem.html -l en\n'''
     )
-    parser.add_argument('input_html', help='Path to the input HTML file')
+    parser.add_argument('input_html', help='Path to the input HTML file or an AtCoder problem URL')
     parser.add_argument('output_md', nargs='?', help='Path to the output Markdown file (optional)')
     parser.add_argument('-l', '--language', default='ja', choices=['ja', 'en'], help='Language to extract (default: ja)')
     args = parser.parse_args()
-    convert_file(args.input_html, args.output_md, args.language)
+    # Detect URL (http/https)
+    if re.match(r'^https?://', args.input_html):
+        convert_url(args.input_html, args.output_md, args.language)
+    else:
+        convert_file(args.input_html, args.output_md, args.language)
 
 
 if __name__ == '__main__':  # pragma: no cover
