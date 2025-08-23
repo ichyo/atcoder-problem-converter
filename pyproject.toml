@@ -1,0 +1,34 @@
+[project]
+name = "atcoder-problem-converter"
+version = "0.1.0"
+description = "Convert AtCoder problem HTML pages to Markdown using BeautifulSoup"
+authors = [ { name = "Unknown" } ]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "beautifulsoup4>=4.12.0",
+]
+
+[project.scripts]
+atcoder-problem-converter = "atcoder_problem_converter.main:main"
+
+[tool.uv]
+# Development dependencies (installed with `uv sync --dev` or `uv pip install -e . --with dev`)
+dev-dependencies = [
+    "pytest>=8.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["atcoder_problem_converter"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "atcoder_problem_converter",
+    "README.md",
+    "pyproject.toml",
+]
+
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
