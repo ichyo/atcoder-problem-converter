@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-atcoder-problem-converter = "atcoder_problem_converter.main:main"
+apc = "atcoder_problem_converter.main:main"
 
 [tool.uv]
 # Development dependencies (installed with `uv sync --dev` or `uv pip install -e . --with dev`)

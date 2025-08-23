@@ -14,12 +14,15 @@ uv sync
 
 ## Usage
 
-CLI entry point (installed as `atcoder-problem-converter`):
+CLI entry points (installed as `atcoder-problem-converter` and the shorter alias `apc`):
 
 ```bash
-uv run atcoder-problem-converter problem.html                # outputs problem.md
-uv run atcoder-problem-converter problem.html out.md         # custom output file
-uv run atcoder-problem-converter problem.html -l en          # English extraction
+uv run apc problem.html                                      # outputs problem.md
+uv run apc problem.html out.md                               # custom output file
+uv run apc problem.html -l en                                # English extraction
+
+# Long form still works
+uv run apc problem.html
 ```
 
 Or directly:
@@ -40,7 +43,7 @@ uv run pytest -q      # run tests
 Save an AtCoder task page as `sample.html` and run:
 
 ```bash
-uv run atcoder-problem-converter sample.html
+uv run apc sample.html
 ```
 
 ## License

@@ -137,7 +137,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Convert AtCoder problem HTML to Markdown format',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''\nExamples:\n  uv run atcoder-problem-converter problem.html\n  uv run atcoder-problem-converter problem.html output.md\n  uv run atcoder-problem-converter problem.html -l en\n'''
+    epilog='''\nExamples:\n  uv run apc problem.html\n  uv run apc problem.html output.md\n  uv run apc problem.html -l en\n'''
     )
     parser.add_argument('input_html', help='Path to the input HTML file')
     parser.add_argument('output_md', nargs='?', help='Path to the output Markdown file (optional)')
