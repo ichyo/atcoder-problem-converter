@@ -1,4 +1,8 @@
 from atcoder_problem_converter import AtCoderProblemParser
+from atcoder_problem_converter.main import convert_file
+from pathlib import Path
+from io import StringIO
+import sys
 
 SAMPLE_HTML = """
 <html>
@@ -33,3 +37,18 @@ def test_parse_basic():
     assert 'Time Limit' in md
     # Variables converted to LaTeX style $a$ $b$
     assert '$a$' in md and '$b$' in md
+
+
+def test_convert_file_stdout(tmp_path: Path, monkeypatch):
+  html_file = tmp_path / 'prob.html'
+  html_file.write_text(SAMPLE_HTML, encoding='utf-8')
+  buf = StringIO()
+  monkeypatch.setattr(sys, 'stdout', buf)
+  convert_file(str(html_file), None, language='ja')  # stdout because None
+  out = buf.getvalue()
+  assert '# ABC001 A - 積雪深差' in out
+  buf2 = StringIO()
+  monkeypatch.setattr(sys, 'stdout', buf2)
+  convert_file(str(html_file), '-', language='ja')  # explicit -
+  out2 = buf2.getvalue()
+  assert '# ABC001 A - 積雪深差' in out2

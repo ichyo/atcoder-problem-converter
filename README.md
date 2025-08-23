@@ -13,5 +13,3 @@ or
 ```bash
 $ uv tool install git+https://github.com/ichyo/atcoder-problem-converter.git
 $ apc problem.html
-```
-

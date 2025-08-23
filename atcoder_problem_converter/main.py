@@ -116,17 +116,24 @@ class AtCoderProblemParser:
 
 
 def convert_file(input_path: str, output_path: Optional[str] = None, language: str = 'ja') -> None:
+    """Convert a local HTML file to Markdown.
+
+    If output_path is omitted or set to '-', the generated markdown is written
+    to stdout. Otherwise it's written to the given path.
+    """
     input_file = Path(input_path)
     if not input_file.exists():
-        print(f"Error: File '{input_path}' not found")
+        print(f"Error: File '{input_path}' not found", file=sys.stderr)
         sys.exit(1)
     html_content = input_file.read_text(encoding='utf-8')
     parser = AtCoderProblemParser(html_content, language)
     markdown_content = parser.parse()
-    if output_path is None:
-        output_file = input_file.with_suffix('.md')
-    else:
-        output_file = Path(output_path)
+    if output_path is None or output_path == '-':  # stdout mode
+        if not markdown_content.endswith('\n'):
+            markdown_content += '\n'
+        sys.stdout.write(markdown_content)
+        return
+    output_file = Path(output_path)
     output_file.write_text(markdown_content, encoding='utf-8')
     print(f"Successfully converted '{input_path}' to '{output_file}'")
     print(f"Language: {language}")
@@ -171,10 +178,12 @@ def convert_url(url: str, output_path: Optional[str] = None, language: str = 'ja
     html_content = resp.text
     parser = AtCoderProblemParser(html_content, language)
     markdown_content = parser.parse()
-    if output_path is None:
-        output_file = _default_output_from_url(url)
-    else:
-        output_file = Path(output_path)
+    if output_path is None or output_path == '-':  # stdout mode
+        if not markdown_content.endswith('\n'):
+            markdown_content += '\n'
+        sys.stdout.write(markdown_content)
+        return
+    output_file = Path(output_path)
     output_file.write_text(markdown_content, encoding='utf-8')
     print(f"Successfully converted '{url}' to '{output_file}'")
     print(f"Language: {language}")
@@ -185,10 +194,10 @@ def main():
     parser = argparse.ArgumentParser(
         description='Convert AtCoder problem HTML to Markdown format',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-    epilog='''\nExamples:\n  uv run apc problem.html\n  uv run apc problem.html output.md\n  uv run apc problem.html -l en\n'''
+        epilog='''\nExamples:\n  uv run apc problem.html            # write markdown to stdout\n  uv run apc problem.html output.md  # write to output.md\n  uv run apc problem.html -          # explicit stdout\n  uv run apc problem.html -l en      # stdout, English\n'''
     )
     parser.add_argument('input_html', help='Path to the input HTML file or an AtCoder problem URL')
-    parser.add_argument('output_md', nargs='?', help='Path to the output Markdown file (optional)')
+    parser.add_argument('output_md', nargs='?', help="Path to the output Markdown file (optional). Use '-' or omit to write to stdout")
     parser.add_argument('-l', '--language', default='ja', choices=['ja', 'en'], help='Language to extract (default: ja)')
     args = parser.parse_args()
     # Detect URL (http/https)
