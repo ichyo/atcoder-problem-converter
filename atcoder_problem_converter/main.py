@@ -59,9 +59,10 @@ class AtCoderProblemParser:
             self._parse_section(content_tag)
 
     def _parse_section(self, section_tag: Tag):
-        for element in section_tag.children:
-            if not isinstance(element, Tag):
-                continue
+        elements = [child for child in section_tag.children if isinstance(child, Tag)]
+        index = 0
+        while index < len(elements):
+            element = elements[index]
             if element.name == 'h3':
                 self.markdown_content.append(f"\n## {element.text.strip()}\n")
             elif element.name == 'p':
@@ -71,9 +72,17 @@ class AtCoderProblemParser:
                     text = self._convert_text_with_variables(element)
                     if text:
                         self.markdown_content.append(text)
-            elif element.name == 'ul':
+            elif element.name in ('ul', 'ol'):
                 self._parse_list(element)
                 self.markdown_content.append("")
+            elif element.name == 'li':
+                li_items = []
+                while index < len(elements) and elements[index].name == 'li':
+                    li_items.append(elements[index])
+                    index += 1
+                self._parse_list_items(li_items, indent_level=0, ordered=False, start=1)
+                self.markdown_content.append("")
+                continue
             elif element.name == 'pre':
                 code_text = element.text.strip()
                 if code_text:
@@ -82,16 +91,46 @@ class AtCoderProblemParser:
                     self.markdown_content.append("```\n")
             elif element.name == 'div':
                 self._parse_section(element)
+            index += 1
 
-    def _parse_list(self, ul_tag: Tag, indent_level: int = 0):
+    def _parse_list(self, list_tag: Tag, indent_level: int = 0):
+        ordered = list_tag.name == 'ol'
+        start = 1
+        if ordered and list_tag.has_attr('start'):
+            try:
+                start = int(list_tag['start'])
+            except ValueError:
+                start = 1
+        items = list_tag.find_all('li', recursive=False)
+        self._parse_list_items(items, indent_level=indent_level, ordered=ordered, start=start)
+
+    def _parse_list_items(self, items, indent_level: int, ordered: bool, start: int):
         indent = "  " * indent_level
-        for li in ul_tag.find_all('li', recursive=False):
+        index = start
+        for li in items:
+            marker_number = index
+            if ordered and li.has_attr('value'):
+                try:
+                    marker_number = int(li['value'])
+                except ValueError:
+                    marker_number = index
+            marker = f"{marker_number}." if ordered else "-"
             li_text = self._convert_text_with_variables(li)
             if li_text:
-                self.markdown_content.append(f"{indent}- {li_text}")
-            nested_ul = li.find('ul', recursive=False)
-            if nested_ul:
-                self._parse_list(nested_ul, indent_level + 1)
+                self.markdown_content.append(f"{indent}{marker} {li_text}")
+            else:
+                self.markdown_content.append(f"{indent}{marker}")
+            for child in li.children:
+                if isinstance(child, Tag) and child.name in ('ul', 'ol'):
+                    self._parse_list(child, indent_level + 1)
+            if ordered:
+                if li.has_attr('value'):
+                    try:
+                        index = int(li['value']) + 1
+                    except ValueError:
+                        index += 1
+                else:
+                    index += 1
 
     def _convert_text_with_variables(self, element: Tag) -> str:
         text_parts = []
